@@ -1,0 +1,512 @@
+# the choice a = 1 so the offset is 0.
+# Alternatively we could use the
+# function seq() produce a sequence of
+# increasing cumulative probabilities
+offset = .025
+cumPseq <- seq(from = offset,
+to = 1-offset, length.out=20)
+cumPseq
+# Now we put ppoints to work in the sequence
+# cum_probs => quantiles => densities
+n <- 4000 # More than we need for graphics
+cumP <- ppoints(n)
+q <- qweibull(cumP,shape = .9, scale = 2)
+d <- dweibull(q,shape = .9, scale = 2)
+dfDen <- tibble(q,d)
+# 1.2 A density plot
+hw <- theme_gray()+ theme(
+plot.title=element_text(hjust=0.5),
+plot.subtitle=element_text(hjust=0.5),
+plot.caption=element_text(hjust=-.5),
+strip.text.y = element_blank(),
+strip.background=element_rect(fill=rgb(.9,.95,1),
+colour=gray(.5), size=.2),
+panel.border=element_rect(fill=FALSE,colour=gray(.70)),
+panel.grid.minor.y = element_blank(),
+panel.grid.minor.x = element_blank(),
+panel.spacing.x = unit(0.10,"cm"),
+panel.spacing.y = unit(0.05,"cm"),
+# axis.ticks.y= element_blank()
+axis.ticks=element_blank(),
+axis.text=element_text(colour="black"),
+axis.text.y=element_text(margin=margin(0,3,0,3)),
+axis.text.x=element_text(margin=margin(-1,0,3,0))
+)
+title <- paste('Weibull: Shape=0.9 Scale=2',
+'Density Plot',sep = '\n')
+ggplot(dfDen, aes(x = q, y = d)) +
+geom_area(color = "blue", fill = rgb(0,.5,1),alpha = .2) +
+labs(x = 'Quantiles',y = 'Density',title = title) + hw
+title <- paste('Weibull: Shape=0.9 Scale=2',
+'Density Plot',sep = '\n')
+ggplot(dfDen, aes(x = q, y = d)) +
+geom_area(color = "blue", fill = rgb(0,.5,1),alpha = .2) +
+labs(x = 'Quantiles',y = 'Density',title = title) + hw
+set.seed(37)
+n <- 100
+samp <- rweibull(n,shape = .9,scale = 2)
+sampMean <- mean(samp)
+sampMedian <- median(samp)
+sampSD <- sd(samp)
+sampMean
+sampMedian
+sampSD
+?ppoints
+# When the ppoints argument is a vector
+# as shown below, it uses the vector length
+# as argument n.
+cumP <- ppoints(samp)
+normQ <- qnorm(cumP,
+mean = sampMean, sd = sampSD)
+# 3.3 Make a tibble of quantile pairs
+dfQQ <- tibble(normQ,
+sampQ = sort(samp))
+normQ <- qnorm(cumP,
+mean = sampMean, sd = sampSD)
+hist(samp)
+dfQQ <- tibble(normQ,
+sampQ = sort(samp))
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_path() +
+geom_point() +
+labs(x = "Normal Quantiles",
+y = "Weibull Sample Quantiles",
+title = "Normal Q - Q Plot") + hw
+dfQQ
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_path() +
+geom_point() +
+labs(x = "Normal Quantiles",
+y = "Weibull Sample Quantiles",
+title = "Normal Q - Q Plot") + hw
+sampMedian <- median(samp)
+normMedian  <- mean(samp) # normal median = mean
+probs =  c(.25,.75)
+sampQuart13 <- quantile(samp,probs)
+sampQuart13
+normQuart13 <- quantile(normQ,probs)
+normQuart13
+coef <- lm(sampQuart13~normQuart13)$coef
+coef
+# 4.3  Compute text coordinates
+xLeft <- (normMedian + min(normQ))/2
+yLeft <- (sampMedian + max(samp))/2
+xRight <- (normMedian + max(normQ))/2
+yRight <- .3*sampMedian + .7*min(samp)
+xlab <- paste0("Normal: Mean = ",
+round(sampMean,2),
+", SD = ",round(sampSD,2))
+ylab <- paste0("Weibull: Shape=0.9 Scale=2",
+"\nSample Size = 100")
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_hline(yintercept = sampMedian,
+color  = "blue") +
+geom_vline(xintercept = sampMean,
+color = "blue") +
+geom_abline(intercept = coef[1],
+slope  =  coef[2],size = 1,col = "black") +
+geom_point(shape = 21,fill = "red",
+color = "black",size = 3.2) +
+labs(x = xlab, y = ylab,
+title = paste("Q-Q Plot","Blue Lines At Medians",
+"Black Line Thru 1st and 3rd Quartiles",
+sep = "\n")) +
+annotate("text",xLeft,yLeft,size = 4,
+label = paste("Left Column: Thin Left Tail ",
+"Lowest points above black line",sep = "\n")) +
+annotate("text", xRight, yRight, size = 4,
+label = paste("Right Column: Thick Right Tail",
+"Highest points above black line",
+sep = "\n")) + hw
+df <- data.frame(y = c(rt(2000,df=5),rnorm(2000)),
+dist=c(rep('t(df=5)',2000),rep('sdnorm',2000)));
+#plot density estimates on same scale for comparison
+ggplot(data = df, aes( x = y, group = dist, fill = dist)) +
+geom_density( color = "black", adjust = 2, alpha = .2) +
+scale_fill_manual(
+values = c("red", "yellow"),
+na.value="grey70") + hw
+head(df)
+ggplot(data = df, aes( x = y, group = dist, fill = dist)) +
+geom_density( color = "black", adjust = 2, alpha = .2) +
+scale_fill_manual(
+values = c("red", "yellow"),
+na.value="grey70") + hw
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+df$y[df$dist=='sdnorm'] <- df$y[df$dist=='sdnorm']+10;
+#compare both distributions to a standard normal
+ggplot(df, aes(sample = y, color = dist)) +
+geom_qq() +
+geom_qq_line()
+library(tidyverse)
+set.seed(2482)
+cumP <- ppoints(n = 1000, a =5)
+cumP
+n <- 4000 # More than we need for graphics
+cumP <- ppoints(n)
+q <- qweibull(cumP,shape = .9, scale = 2)
+d <- dweibull(q,shape = .9, scale = 2)
+dfDen <- tibble(q,d)
+ggplot(dfDen, aes(x = q, y = d)) +
+geom_area(color = "blue", fill = rgb(0,.5,1),alpha = .2) +
+labs(x = 'Quantiles',y = 'Density',title = title) + hw
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_path() +
+geom_point() +
+labs(x = "Normal Quantiles",
+y = "Weibull Sample Quantiles",
+title = "Normal Q - Q Plot") + hw
+cumP <- ppoints(samp)
+normQ <- qnorm(cumP,
+mean = sampMean, sd = sampSD)
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_path() +
+geom_point() +
+labs(x = "Normal Quantiles",
+y = "Weibull Sample Quantiles",
+title = "Normal Q - Q Plot") + hw
+xlab <- paste0("Normal: Mean = ",
+round(sampMean,2),
+", SD = ",round(sampSD,2))
+ylab <- paste0("Weibull: Shape=0.9 Scale=2",
+"\nSample Size = 100")
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_hline(yintercept = sampMedian,
+color  = "blue") +
+geom_vline(xintercept = sampMean,
+color = "blue") +
+geom_abline(intercept = coef[1],
+slope  =  coef[2],size = 1,col = "black") +
+geom_point(shape = 21,fill = "red",
+color = "black",size = 3.2) +
+labs(x = xlab, y = ylab,
+title = paste("Q-Q Plot","Blue Lines At Medians",
+"Black Line Thru 1st and 3rd Quartiles",
+sep = "\n")) +
+annotate("text",xLeft,yLeft,size = 4,
+label = paste("Left Column: Thin Left Tail ",
+"Lowest points above black line",sep = "\n")) +
+annotate("text", xRight, yRight, size = 4,
+label = paste("Right Column: Thick Right Tail",
+"Highest points above black line",
+sep = "\n")) + hw
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_hline(yintercept = sampMedian,
+color  = "blue") +
+geom_vline(xintercept = sampMean,
+color = "blue") +
+geom_abline(intercept = coef[1],
+slope  =  coef[2],size = 1,col = "black") +
+geom_point(shape = 21,fill = "red",
+color = "black",size = 3.2) +
+labs(x = xlab, y = ylab,
+title = paste("Q-Q Plot","Blue Lines At Medians",
+"Black Line Thru 1st and 3rd Quartiles",
+sep = "\n")) +
+annotate("text",xLeft,yLeft,size = 4,
+label = paste("Left Column: Thin Left Tail ",
+"Lowest points above black line",sep = "\n")) +
+annotate("text", xRight, yRight, size = 4,
+label = paste("Right Column: Thick Right Tail",
+"Highest points above black line",
+sep = "\n")) + hw
+ggplot(df, aes(sample = y, color = dist)) +
+geom_qq() +
+geom_qq_line()
+ggplot(df, aes(sample = y, color = dist)) +
+geom_qq() +
+geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+ggplot(df, aes(sample = y, color = dist)) +
+geom_qq() +
+geom_qq_line()
+cumP <- ppoints(samp)
+normQ <- qnorm(cumP,mean = sampMean, sd = sampSD)
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_path() +
+geom_point() +
+labs(x = "Normal Quantiles",
+y = "Weibull Sample Quantiles",
+title = "Normal Q - Q Plot") + hw
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+ggplot(df, aes(sample = y, color = dist)) +
+geom_qq() +
+geom_qq_line()
+cumP <- ppoints(n = 1000, a =5)
+cumP
+samp <- rt(10000, 5)
+samp
+cumP <- ppoints(samp)
+sampMean <- mean(samp)
+sampMedian <- median(samp)
+sampSD <- sd(samp)
+normQ <- qnorm(cumP,mean = sampMean, sd = sampSD)
+dfQQ <- tibble(normQ,sampQ = sort(samp))
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_path() +
+geom_point() +
+labs(x = "Normal Quantiles",
+y = "Sample Quantiles",
+title = "Normal Q - Q Plot")
+samp <- rt(10000, 5)
+samp
+cumP <- ppoints(n = 1000, a =5)
+cumP
+cumP <- ppoints(samp)
+sampMean <- mean(samp)
+sampMedian <- median(samp)
+sampSD <- sd(samp)
+normQ <- qnorm(cumP,mean = sampMean, sd = sampSD)
+dfQQ <- tibble(normQ,sampQ = sort(samp))
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_path() +
+geom_point() +
+labs(x = "Normal Quantiles",
+y = "Sample Quantiles",
+title = "Normal Q - Q Plot")
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+ggplot(df, aes(sample = y, color = dist)) +
+geom_qq() +
+geom_qq_line()
+cumP <- ppoints(samp)
+sampMean <- mean(samp)
+sampMedian <- median(samp)
+sampSD <- sd(samp)
+normQ <- qnorm(cumP,mean = sampMean, sd = sampSD)
+dfQQ <- tibble(normQ,sampQ = sort(samp))
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_path() +
+geom_point() +
+labs(x = "Normal Quantiles",
+y = "Sample Quantiles",
+title = "Normal Q - Q Plot")
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+ggplot(df, aes(sample = y, color = dist)) +
+geom_qq() +
+geom_qq_line()
+df <- data.frame(y = c(rt(10000,df=5),rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+df <- data.frame(y = c(rt(10000,df=5),rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+df <- data.frame(y = c(rt(10000,df=5),rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = rt(10000,df=5)))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = samp$y))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = samp$y))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+library(tidyverse)
+#create a data frame with 10000 random samples from a t distribution with 5 degrees of freedom
+samp <- data.frame(y=rt(10000, 5))
+df <- data.frame(y = c(samp$y,rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = samp$y))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+df <- data.frame(y = c(samp$y,rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+library(tidyverse)
+set.seed(2482)
+#create a data frame with 10000 random samples from a t distribution with 5 degrees of freedom
+samp <- data.frame(y=rt(10000, 5))
+#create a qq plot to compare the sample distribution to the normal distribution
+df <- data.frame(y = c(samp$y,rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+#create a qq plot to compare the sample distribution to the appropriate distribution
+#(hint: distribution and dparam inputs for geom_qq and geom_qq_line functions)
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = samp$y))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+df <- data.frame(y = c(samp$y,rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = samp$y))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+library(tidyverse)
+set.seed(2482)
+#create a data frame with 10000 random samples from a t distribution with 5 degrees of freedom
+samp <- data.frame(y=rt(10000, 5))
+df <- data.frame(y = c(samp$y,rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = samp$y))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+df <- data.frame(y = c(samp$y,rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = samp$y))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+df <- data.frame(y = c(samp$y,rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = samp$y))
+p + geom_qq() + geom_qq_line()
+p + geom_qq(distribution = qt, dparams = 5) +
+geom_qq_line(distribution = qt, dparams = 5)
+cumP <- ppoints(samp)
+sampMean <- mean(samp)
+sampMedian <- median(samp)
+sampSD <- sd(samp)
+normQ <- qnorm(cumP,mean = sampMean, sd = sampSD)
+dfQQ <- tibble(normQ,sampQ = sort(samp))
+ggplot(dfQQ,aes(x = normQ,y = sampQ)) +
+geom_path() +
+geom_point() +
+labs(x = "Normal Quantiles",
+y = "Sample Quantiles",
+title = "Normal Q - Q Plot")
+df <- data.frame(y = c(samp$y,rnorm(10000)),
+dist=c(rep('t(df=5)',10000),rep('sdnorm',10000)));
+p <- ggplot(df[df$dist=='t(df=5)',], aes(sample = y))
+p + geom_qq() + geom_qq_line()
+setwd("~/Desktop/Group2 Coding+Datasets+Graphs")
+####Group2 Redesign Project Coding Part
+rg = read.csv ("recentgrads.csv")
+recent_grads2=read.csv("2.csv")
+recent_grads3=read.csv("3.csv")
+recent_grads4= read.csv("4.csv")
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+options(scipen = 999)
+#Figure8 scatter plot for salary&the percentage of male in each major
+ggplot(rg,aes(x=Men/(Men+Women),y=Median/1000))+
+geom_text(data =TOPMEN, mapping = aes(y=Median/1000+2, label=Major), size = 2, color="blue")+
+geom_text(data =TOPWOMEN, mapping = aes(y=Median/1000+2, label=Major), size = 2, color="red")+
+geom_point(stat="identity")+  labs(x="Percentage of Male in each Major ",y="Median Salary*1000")+
+geom_point()
+####Group2 Redesign Project Coding Part
+rg = read.csv ("recentgrads.csv")
+recent_grads2=read.csv("2.csv")
+recent_grads3=read.csv("3.csv")
+recent_grads4= read.csv("4.csv")
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+options(scipen = 999)
+# Figure1 Number of students per major
+ggplot(recent_grads4,aes(x = Gender,y=(Total/1000),fill=Gender))+
+geom_bar(stat="identity")+labs(x="Gender",y="Number of Students *1000",title="Number of males&females per Major Category")+
+facet_wrap("reorder(Major_category, Total)",nrow=4)+
+geom_text(mapping = aes(y=Total/1000+50, label=Total/1000), size = 2)
+theme(plot.title = element_text(hjust = 0.5),legend.position = "none")
+#Figure2 Top10 major categories for studens
+ggplot(recent_grads2,aes(x = reorder(Major_category, Total/1000),y=Total/1000,fill=Major_category))+
+geom_bar(stat="identity")+
+coord_flip()+
+labs(x="Major Category",y="Number of students*1000",
+title="Top10 Major categories for students",
+fill="Major_category")+
+theme(legend.position="none")
+#Figure3 Top3 majors in each Major Category.
+TOPThree = rg %>% group_by(Major_category) %>% filter(Total %in% sort(Total, decreasing=TRUE)[1:3])
+ggplot(TOPThree, aes(x=reorder(Major_category, Total, function(x){ sum(x) }), y=Total/1000, fill=Major))+
+geom_bar(stat="summary", fun.y=sum, position="dodge")+
+geom_text(mapping = aes( y= Total/1000 + 5,label=Major), hjust = 0, size=2, position = position_dodge(width = 1))+
+labs(x="Major",
+y="Number of students*1000",
+title="Top3 Majors of Each Major Category")+
+theme(legend.position="none")+
+coord_flip()
+#Figure4 top major per Major Category
+ggplot(recent_grads2,aes(x = reorder(Major_category, Total/1000),y=Total/1000,fill=reorder(Major,-Total/1000)))+
+geom_bar(stat="identity")+
+coord_flip()+
+labs(x="Major Category",y="Number of students*1000",
+title="Top1Major of each Major Category",
+fill="Major")
+#Figure5 Top 10 majors for male
+TOPMEN = head(rg[order(rg$Men, decreasing=TRUE),], 10)
+ggplot(TOPMEN, aes(x=reorder(Major, Men), y=Men/1000, fill=Major))+
+geom_bar(stat="identity") +
+labs(x="Major",
+y="Number of Males*1000",
+title="Top10 majors for Males")+coord_flip()+
+theme(legend.position="none")
+#Figure6 Top 10 majors for female
+TOPWOMEN = head(rg[order(rg$Women, decreasing=TRUE),], 10)
+ggplot(TOPWOMEN, aes(x=reorder(Major, Women), y=Women/1000, fill=Major))+
+geom_bar(stat="identity") +
+labs(x="Major",
+y="Number of Females*1000",
+title="Top10 majors for Females")+coord_flip()+
+theme(legend.position="none")
+#Figure7 code for correlation between total graduates per field and Salary:
+ggplot(recent_grads3,aes(x = Median/1000,y=Total/1000,))+
+geom_point(stat="identity")+  labs(x="Median Salary *1000",y="Number of students in each Major*1000",
+title="Median Salary of Graduates per Major")+
+theme(plot.title = element_text(hjust = 0.5))
+#Figure8 scatter plot for salary&the percentage of male in each major
+ggplot(rg,aes(x=Men/(Men+Women),y=Median/1000))+
+geom_text(data =TOPMEN, mapping = aes(y=Median/1000+2, label=Major), size = 2, color="blue")+
+geom_text(data =TOPWOMEN, mapping = aes(y=Median/1000+2, label=Major), size = 2, color="red")+
+geom_point(stat="identity")+  labs(x="Percentage of Male in each Major ",y="Median Salary*1000")+
+geom_point()
+gg<-ggplot(rg, aes(x=ShareWomen, y=Median)) +
+geom_point(aes(col=ShareWomen, size=Median)) +
+geom_smooth(method="loess", se=F) +labs(subtitle="Share of Female by Median pay",
+y="Median Pay",x="Share of Female",title="Scatterplot" )
+require(scales)
+gg + scale_y_continuous(labels = comma)
+plot(gg)
+TOPThree = rg %>% group_by(Major_category) %>% filter(Total %in% sort(Total, decreasing=TRUE)[1:3])
+ggplot(TOPThree, aes(x=reorder(Major_category, Total, function(x){ sum(x) }), y=Total/1000, fill=Major))+
+geom_bar(stat="summary", fun.y=sum, position="dodge")+
+geom_text(mapping = aes( y= Total/1000 + 5,label=Major), hjust = 0, size=2, position = position_dodge(width = 1))+
+labs(x="Major",
+y="Number of students*1000",
+title="Top3 Majors of Each Major Category")+
+theme(legend.position="none")+
+coord_flip()
+#Figure2 Top10 major categories for studens
+ggplot(recent_grads2,aes(x = reorder(Major_category, Total/1000),y=Total/1000,fill=Major_category))+
+geom_bar(stat="identity")+
+coord_flip()+
+labs(x="Major Category",y="Number of students*1000",
+title="Top10 Major categories for students",
+fill="Major_category")+
+theme(legend.position="none")
